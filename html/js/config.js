@@ -11,7 +11,7 @@
 const CONFIG = {
   // Replace this with your Apps Script web app deployment URL
   // Get this from Apps Script > Deploy > Manage Deployments > Copy URL
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/d/YOUR_DEPLOYMENT_ID_HERE/usercontent',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbz5g6HY7oFQFPXkKr7Mkc7xszGk8NGgpCB46lgnY1v_VZ3m-ZRVLBWGjeo6KDSob3i0SA/exec',
   
   // API timeout in milliseconds
   API_TIMEOUT: 30000,
