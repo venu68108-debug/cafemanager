@@ -2,118 +2,126 @@
 
 A comprehensive web application for managing daily collection data from multiple cafeterias and eco-shops across office locations.
 
-## Architecture Overview
+## 🎯 Architecture Overview
 
-- **Frontend**: GitHub-hosted HTML/CSS/JavaScript (mobile-responsive)
-- **Backend**: Google Apps Script (serverless functions)
+- **Frontend**: GitHub-hosted HTML/CSS/JavaScript (100% mobile-responsive)
+- **Backend**: Google Apps Script (serverless)
 - **Data**: Google Sheets (master data + user credentials)
-- **Deployment**: Apps Script Web App + GitHub Pages (static files)
+- **Deployment**: Apps Script Web App + GitHub Pages
 
-## Components
+## 📁 Project Structure
 
-### Frontend (GitHub-hosted)
-- `html/index.html` - User data entry form
-- `html/adminReport.html` - Admin consolidated reports
-- `html/shopPanel.html` - Individual shop reports
-- `js/config.js` - Configuration and API wrapper
-- `css/` - Responsive styles
+```
+html/
+├── index.html              (User data entry & reports)
+├── adminReport.html        (Admin consolidated reports)
+├── shopPanel.html          (Individual shop reports)
+├── adminReportPDF.html     (PDF template)
+└── shopReportPDF.html      (PDF template)
+js/
+├── config.js               (API configuration & utilities)
+README.md
+SETUP_GUIDE.md
+```
 
-### Backend (Google Apps Script)
-- `Code.gs` - Single backend file with all business logic
-  - Authentication (users & admins)
-  - Data processing and validation
-  - Report aggregation and PDF generation
-  - CSV export
+## 🚀 Quick Start
 
-### Database (Google Sheets)
-- Master data sheets per location
-- USER_CREDENTIALS sheet for authentication
-- No modifications needed to existing structure
+### Step 1: Deploy Apps Script Backend
 
-## Setup Instructions
-
-### 1. Deploy Apps Script
-
-1. Open your Google Sheet: `https://docs.google.com/spreadsheets/d/1HIxY9hwjI2ITVRvl3_v5kABZJtS7lffYFoqihLRPO5s/`
+1. Open your Google Sheet
 2. Go to **Extensions > Apps Script**
-3. Replace the code with `Code.gs` from this repository
+3. Replace code with `Code.gs` (provided)
 4. Click **Deploy > New Deployment**
-5. Select Type: **Web app**
-6. Execute as: Your email
-7. Who has access: **Anyone**
-8. Copy the deployment URL
+   - Type: Web app
+   - Execute as: Your email
+   - Who has access: Anyone
+5. **Copy the deployment URL**
 
-### 2. Update Frontend Config
+### Step 2: Configure Frontend
 
-1. Edit `html/js/config.js`
-2. Replace `YOUR_DEPLOYMENT_ID` with your deployment URL
-3. Example: `https://script.google.com/macros/d/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXX/usercontent`
+Edit `html/js/config.js` and update:
 
-### 3. Host HTML Files
+```javascript
+const CONFIG = {
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/d/YOUR_DEPLOYMENT_ID/usercontent',
+  // ... other config
+};
+```
 
-#### Option A: GitHub Pages (Recommended)
-1. Go to repository Settings > Pages
-2. Enable GitHub Pages from main branch, `/root` or `/docs` folder
-3. Your site: `https://venu68108-debug.github.io/cafemanager`
+### Step 3: Enable GitHub Pages
 
-#### Option B: Self-Hosted
-- Copy HTML files to any web server
-- Update `config.js` with correct paths
+1. Go to repository **Settings > Pages**
+2. Source: **Deploy from a branch**
+3. Branch: **main** | Folder: **/html**
+4. Your site: `https://venu68108-debug.github.io/cafemanager/`
 
-## Usage
+## 🔗 Access URLs
 
-### For Data Entry Users
-1. Go to: `https://venu68108-debug.github.io/cafemanager/html/index.html`
-2. Login with provided credentials
-3. Enter daily collection data
-4. View your monthly report
+| Role | URL |
+|------|-----|
+| **Data Entry Users** | `https://venu68108-debug.github.io/cafemanager/index.html` |
+| **Shop Managers** | `https://venu68108-debug.github.io/cafemanager/shopPanel.html` |
+| **Admins** | `https://venu68108-debug.github.io/cafemanager/adminReport.html` |
 
-### For Shop Managers
-1. Go to: `https://venu68108-debug.github.io/cafemanager/html/shopPanel.html`
-2. Select date range
-3. Download PDF report
+## 📱 Mobile-First Features
 
-### For Admins
-1. Go to: `https://venu68108-debug.github.io/cafemanager/html/adminReport.html`
-2. Login with admin credentials
-3. View consolidated reports from all locations
-4. Export as CSV or PDF
+✅ Fully responsive design (320px - 1920px)  
+✅ Touch-optimized buttons and forms  
+✅ Native mobile date pickers  
+✅ Vertical stack layout on mobile  
+✅ Fast load times  
+✅ Works offline (with cached data)  
 
-## Mobile Responsiveness
+## 🔐 Security
 
-- Optimized for all device sizes (320px - 1920px)
-- Touch-friendly buttons and inputs
-- Vertical stack layout for mobile
-- Responsive tables with scroll
-- Fast load times
-
-## Security Notes
-
-- User credentials hashed with SHA-256
+- SHA-256 hashed credentials
+- No localStorage for sensitive data
 - CORS-safe API communication
+- Session-based authentication
 - Admin-only access controls
-- No sensitive data in localStorage
 
-## Troubleshooting
+## 📋 Google Sheet Structure
 
-### "Config file not found"
-- Ensure `js/config.js` is in correct path
-- Check `APPS_SCRIPT_URL` in config.js
+### USER_CREDENTIALS Sheet
+- Username | HashedPassword | LocationName
+- For admin accounts: LocationName = "ADMIN_REPORT"
 
-### "Failed to call function"
-- Verify deployment URL is correct
-- Check Apps Script deployment hasn't expired
-- Ensure user has access to Google Sheet
+### MASTER-[LOCATION] Sheets
+- Date | Total Collection | Online Collection | Remittance to Bank
 
-### Mobile rendering issues
-- Clear browser cache (Ctrl+Shift+Delete)
-- Try different mobile browser
-- Check viewport meta tag is present
+## 🐛 Troubleshooting
 
-## License
+**"Config not found" error**
+- Check `html/js/config.js` exists
+- Verify APPS_SCRIPT_URL is set correctly
+- Clear browser cache
 
-Internal use only.
+**"Failed to call function"**
+- Confirm Apps Script deployment URL
+- Check deployment hasn't expired
+- Verify user has Google Sheet access
 
-## Support
+**Mobile layout broken**
+- Use DevTools to inspect (F12)
+- Check viewport meta tag in HTML
+- Verify CSS files loading
 
-Contact: [Your contact info]
+## ✅ Setup Checklist
+
+- [ ] Deploy Apps Script
+- [ ] Update config.js with deployment URL
+- [ ] Verify HTML files in correct location
+- [ ] Enable GitHub Pages
+- [ ] Test login on all pages
+- [ ] Test data submission
+- [ ] Test PDF/CSV downloads
+- [ ] Test on mobile device
+
+## 📞 Support
+
+For setup guidance, see `SETUP_GUIDE.md`
+
+---
+
+**Status**: Production Ready  
+**Version**: 1.0

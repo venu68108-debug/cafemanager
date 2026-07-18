@@ -56,7 +56,7 @@ async function callAppsScript(functionName, args = []) {
         })
         .withFailureHandler((error) => {
           clearTimeout(timeout);
-          reject(new Error(`${functionName} failed: ${error.message}`));
+          reject(new Error(`${functionName} failed: ${error.message || error}`));
         })
         [functionName](...args);
     } catch (error) {
@@ -304,80 +304,6 @@ function isDateBefore(dateString1, dateString2) {
   const date2 = new Date(dateString2);
   return date1.getTime() < date2.getTime();
 }
-
-/**
- * Show temporary notification
- */
-function showNotification(message, type = 'info', duration = 4000) {
-  // Create notification element
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.textContent = message;
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 16px 20px;
-    border-radius: 8px;
-    z-index: 9999;
-    animation: slideIn 0.3s ease-out;
-    font-weight: 600;
-    max-width: 90vw;
-  `;
-
-  // Set type-specific styles
-  const colors = {
-    success: { bg: '#d1fae5', text: '#065f46', border: '1px solid #34d399' },
-    error: { bg: '#fee2e2', text: '#991b1b', border: '1px solid #ef4444' },
-    info: { bg: '#dbeafe', text: '#1e40af', border: '1px solid #93c5fd' }
-  };
-
-  const color = colors[type] || colors.info;
-  notification.style.backgroundColor = color.bg;
-  notification.style.color = color.text;
-  notification.style.border = color.border;
-
-  document.body.appendChild(notification);
-
-  // Auto-remove after duration
-  setTimeout(() => {
-    notification.style.animation = 'slideOut 0.3s ease-out';
-    setTimeout(() => notification.remove(), 300);
-  }, duration);
-}
-
-/**
- * Add CSS animation for notifications (if not already in stylesheet)
- */
-(function() {
-  if (!document.getElementById('notification-styles')) {
-    const style = document.createElement('style');
-    style.id = 'notification-styles';
-    style.textContent = `
-      @keyframes slideIn {
-        from {
-          transform: translateX(400px);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-      @keyframes slideOut {
-        from {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        to {
-          transform: translateX(400px);
-          opacity: 0;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-})();
 
 // ============================================
 // 5. VALIDATION HELPERS
