@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Income Data Entry - CafeManager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .container-mobile { max-width: 100%; padding: 16px; }
+    @media (min-width: 768px) { .container-mobile { max-width: 600px; margin: 0 auto; padding: 24px; } }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary.loading { opacity: 0.7; pointer-events: none; }
+    .btn-secondary { background: #f3f4f6; color: #667eea; padding: 12px 24px; border: 2px solid #667eea; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; width: 100%; }
+    .btn-secondary:hover { background: #667eea; color: white; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: #111827; font-size: 14px; }
+    .form-input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; transition: all 0.3s; }
+    .form-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    .message { padding: 16px; border-radius: 8px; margin-bottom: 16px; font-weight: 600; display: none; animation: slideIn 0.3s ease-out; }
+    .message.show { display: block; }
+    .message.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .message.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .message.info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+    .tab-group { display: flex; gap: 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; overflow-x: auto; }
+    .tab-button { padding: 12px 16px; background: none; border: none; font-weight: 600; color: #9ca3af; cursor: pointer; transition: all 0.3s; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+    .tab-button.active { color: #667eea; border-bottom-color: #667eea; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .table-responsive { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    .table th { background: #f9fafb; font-weight: 600; color: #374151; }
+    .table tr:hover { background: #f9fafb; }
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 1000; padding: 16px; }
+    @media (min-width: 768px) { .modal { align-items: center; } }
+    .modal-content { background: white; border-radius: 12px 12px 0 0; width: 100%; max-width: 500px; padding: 24px; animation: slideUp 0.3s ease-out; }
+    @media (min-width: 768px) { .modal-content { border-radius: 12px; } }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal.hidden { display: none; }
+    .row-flex { display: flex; gap: 12px; flex-wrap: wrap; }
+    .flex-1 { flex: 1; min-width: 150px; }
+    @media (max-width: 767px) { .row-flex { flex-direction: column; } .flex-1 { min-width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="container-mobile">
+    <!-- Login Section -->
+    <div id="loginSection" class="card p-6">
+      <h1 class="text-3xl font-bold mb-2 text-gray-800">CafeManager</h1>
+      <p class="text-gray-600 mb-6">Income Data Entry</p>
+      <div id="message" class="message"></div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="username" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-input" required>
+        </div>
+        <button type="submit" class="btn-primary">
+          <span id="loginBtnText">Login</span>
+          <span id="loginSpinner" class="loading-spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Data Entry Section -->
+    <div id="dataEntrySection" class="hidden">
+      <div class="card p-6 mb-6">
+        <div class="flex justify-between items-center mb-6">
+          <h1 class="text-2xl font-bold text-gray-800" id="locationTitle"></h1>
+          <button id="logoutBtn" class="btn-secondary" style="width: auto; padding: 8px 16px; font-size: 14px;">Logout</button>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <!-- Data Entry Form -->
+        <form id="dataEntryForm" class="mb-8 pb-8 border-b">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">Enter Today's Income</h2>
+          
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" id="entryDate" class="form-input" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Total Collection</label>
+            <input type="number" id="totalCollection" class="form-input" step="0.01" min="0" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Online Collection</label>
+            <input type="number" id="onlineCollection" class="form-input" step="0.01" min="0" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Remittance to Bank</label>
+            <input type="number" id="remittanceToBank" class="form-input" step="0.01" min="0" required>
+          </div>
+          
+          <button type="submit" class="btn-primary">
+            <span id="submitBtnText">Submit Data</span>
+            <span id="submitSpinner" class="loading-spinner hidden"></span>
+          </button>
+        </form>
+
+        <!-- My Report Section -->
+        <div id="reportSection">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">My Data Report</h2>
+          
+          <div class="row-flex mb-4">
+            <div class="flex-1">
+              <label class="form-label">From Date</label>
+              <input type="date" id="fromDate" class="form-input">
+            </div>
+            <div class="flex-1">
+              <label class="form-label">To Date</label>
+              <input type="date" id="toDate" class="form-input">
+            </div>
+          </div>
+          
+          <button type="button" id="viewReportBtn" class="btn-primary mb-6">
+            <span id="reportBtnText">View Report</span>
+            <span id="reportSpinner" class="loading-spinner hidden"></span>
+          </button>
+
+          <!-- Summary Report -->
+          <div id="summaryReport" class="hidden mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Summary</h3>
+            <div class="table-responsive">
+              <table class="table">
+                <tbody>
+                  <tr><td class="font-semibold">Total Collection</td><td id="sumTotal" class="text-right"></td></tr>
+                  <tr><td class="font-semibold">Online Collection</td><td id="sumOnline" class="text-right"></td></tr>
+                  <tr><td class="font-semibold">Cash Collection</td><td id="sumCash" class="text-right"></td></tr>
+                  <tr><td class="font-semibold">Remittance to Bank</td><td id="sumRemit" class="text-right"></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Day-by-Day Report -->
+          <div id="dayByDayReport" class="hidden">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Day-by-Day Details</h3>
+            <div class="table-responsive">
+              <table class="table" id="dayByDayTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th style="text-align: right;">Total</th>
+                    <th style="text-align: right;">Online</th>
+                    <th style="text-align: right;">Cash</th>
+                    <th style="text-align: right;">Remit</th>
+                  </tr>
+                </thead>
+                <tbody id="dayByDayBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-content">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Confirm Submission</h3>
+      <p class="text-gray-600 mb-6">Are you sure you want to submit this data?</p>
+      <div class="row-flex gap-3">
+        <button id="confirmBtn" class="btn-primary">Confirm</button>
+        <button id="cancelBtn" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // DOM Elements
+    const loginSection = document.getElementById('loginSection');
+    const dataEntrySection = document.getElementById('dataEntrySection');
+    const loginForm = document.getElementById('loginForm');
+    const dataEntryForm = document.getElementById('dataEntryForm');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const message = document.getElementById('message');
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    let currentUser = null;
+
+    // Initialize
+    function init() {
+      const today = getTodayString();
+      document.getElementById('entryDate').value = today;
+      document.getElementById('entryDate').max = today;
+      document.getElementById('fromDate').value = getFirstDayOfMonthString();
+      document.getElementById('fromDate').max = today;
+      document.getElementById('toDate').value = today;
+      document.getElementById('toDate').max = today;
+      showLoginSection();
+    }
+
+    function showLoginSection() {
+      loginSection.classList.remove('hidden');
+      dataEntrySection.classList.add('hidden');
+      currentUser = null;
+      hideMessage();
+      loginForm.reset();
+    }
+
+    function showDataEntrySection() {
+      loginSection.classList.add('hidden');
+      dataEntrySection.classList.remove('hidden');
+      hideMessage();
+      document.getElementById('locationTitle').textContent = `${currentUser.location} - Income Entry`;
+    }
+
+    function showMessage(text, type = 'info') {
+      message.textContent = text;
+      message.className = `message show ${type}`;
+      setTimeout(hideMessage, 5000);
+    }
+
+    function hideMessage() {
+      message.classList.remove('show');
+    }
+
+    // Login Handler
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      const loginBtn = loginForm.querySelector('button');
+      const spinner = document.getElementById('loginSpinner');
+      const btnText = document.getElementById('loginBtnText');
+      
+      loginBtn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const result = await apiUserLogin(username, password);
+        if (result.success) {
+          currentUser = { username, location: result.locationName };
+          showDataEntrySection();
+          showMessage(result.message, 'success');
+        } else {
+          showMessage(result.message || 'Login failed', 'error');
+        }
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        loginBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+
+    // Data Entry Form
+    dataEntryForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const date = document.getElementById('entryDate').value;
+      const total = parseFloat(document.getElementById('totalCollection').value);
+      const online = parseFloat(document.getElementById('onlineCollection').value);
+      const remit = parseFloat(document.getElementById('remittanceToBank').value);
+
+      // Validation
+      if (!date) {
+        showMessage('Date is required', 'error');
+        return;
+      }
+      if (online > total) {
+        showMessage('Online collection cannot exceed total collection', 'error');
+        return;
+      }
+
+      confirmModal.classList.remove('hidden');
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+      confirmModal.classList.add('hidden');
+      
+      const date = document.getElementById('entryDate').value;
+      const total = parseFloat(document.getElementById('totalCollection').value);
+      const online = parseFloat(document.getElementById('onlineCollection').value);
+      const remit = parseFloat(document.getElementById('remittanceToBank').value);
+
+      const submitBtn = dataEntryForm.querySelector('button');
+      const spinner = document.getElementById('submitSpinner');
+      const btnText = document.getElementById('submitBtnText');
+      
+      submitBtn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const result = await apiSubmitFormData({
+          date,
+          totalCollection: total,
+          onlineCollection: online,
+          remittanceToBank: remit,
+          location: currentUser.location
+        });
+        
+        if (result.success) {
+          showMessage(result.message, 'success');
+          dataEntryForm.reset();
+          document.getElementById('entryDate').value = getTodayString();
+          // Auto-refresh report
+          document.getElementById('viewReportBtn').click();
+        } else {
+          showMessage(result.message, 'error');
+        }
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      confirmModal.classList.add('hidden');
+    });
+
+    // Report Viewer
+    document.getElementById('viewReportBtn').addEventListener('click', async () => {
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+
+      if (!fromDate || !toDate) {
+        showMessage('Please select both dates', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('viewReportBtn');
+      const spinner = document.getElementById('reportSpinner');
+      const btnText = document.getElementById('reportBtnText');
+      
+      btn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const [summary, dayByDay] = await Promise.all([
+          apiGetMyAggregatedData(currentUser.location, fromDate, toDate),
+          apiGetMyDayByDayData(currentUser.location, fromDate, toDate)
+        ]);
+
+        // Display summary
+        document.getElementById('sumTotal').textContent = formatCurrency(summary.totalCollection);
+        document.getElementById('sumOnline').textContent = formatCurrency(summary.totalOnlineCollection);
+        document.getElementById('sumCash').textContent = formatCurrency(summary.totalCashCollection);
+        document.getElementById('sumRemit').textContent = formatCurrency(summary.totalRemittanceToBank);
+        document.getElementById('summaryReport').classList.remove('hidden');
+
+        // Display day-by-day
+        const tbody = document.getElementById('dayByDayBody');
+        tbody.innerHTML = dayByDay.map(row => `
+          <tr>
+            <td>${row.date}</td>
+            <td style="text-align: right;">${formatCurrency(row.totalCollection)}</td>
+            <td style="text-align: right;">${formatCurrency(row.onlineCollection)}</td>
+            <td style="text-align: right;">${formatCurrency(row.cashCollection)}</td>
+            <td style="text-align: right;">${formatCurrency(row.remittanceToBank)}</td>
+          </tr>
+        `).join('');
+        document.getElementById('dayByDayReport').classList.remove('hidden');
+        
+        showMessage('Report generated successfully', 'success');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      showLoginSection();
+      showMessage('Logged out successfully', 'success');
+    });
+
+    // Start
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

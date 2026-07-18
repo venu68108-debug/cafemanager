@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Report - CafeManager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 24px; }
+    h1 { margin: 0 0 4px 0; font-size: 24px; font-weight: 700; color: #1f2937; }
+    .subtitle { color: #6b7280; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: #111827; font-size: 14px; }
+    input { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; box-sizing: border-box; transition: all 0.3s; }
+    input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    .btn { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 16px; width: 100%; }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .message { padding: 16px; border-radius: 8px; margin: 16px 0; font-weight: 600; display: none; animation: slideIn 0.3s ease-out; }
+    .message.show { display: block; }
+    .message.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .message.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .message.info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .flex-1 { flex: 1; min-width: 150px; }
+    @media (max-width: 600px) { .row { flex-direction: column; } .flex-1 { min-width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Shop Income Report</h1>
+      <p class="subtitle">Generate and download PDF reports</p>
+
+      <input type="hidden" id="shopName" value="NETEDC-CAFETERIA">
+      <div id="message" class="message"></div>
+
+      <div class="row">
+        <div class="flex-1">
+          <div class="form-group">
+            <label for="fromDate">From Date</label>
+            <input type="date" id="fromDate" required>
+          </div>
+        </div>
+        <div class="flex-1">
+          <div class="form-group">
+            <label for="toDate">To Date</label>
+            <input type="date" id="toDate" required>
+          </div>
+        </div>
+      </div>
+
+      <button id="downloadPdfBtn" class="btn btn-primary">
+        <span id="btnText">📄 Download PDF Report</span>
+        <span id="spinner" class="loading-spinner hidden"></span>
+      </button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // Initialize with current month
+    const today = getTodayString();
+    document.getElementById('fromDate').value = getFirstDayOfMonthString();
+    document.getElementById('toDate').value = today;
+    document.getElementById('fromDate').max = today;
+    document.getElementById('toDate').max = today;
+
+    const message = document.getElementById('message');
+
+    function showMessage(text, type = 'info') {
+      message.textContent = text;
+      message.className = `message show ${type}`;
+      setTimeout(() => message.classList.remove('show'), 5000);
+    }
+
+    document.getElementById('downloadPdfBtn').addEventListener('click', async () => {
+      const shopName = document.getElementById('shopName').value;
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+
+      if (!fromDate || !toDate) {
+        showMessage('Please select both dates', 'error');
+        return;
+      }
+
+      if (fromDate > toDate) {
+        showMessage('From date cannot be after To date', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('downloadPdfBtn');
+      const spinner = document.getElementById('spinner');
+      const btnText = document.getElementById('btnText');
+      
+      btn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        showMessage('Generating PDF...', 'info');
+        const base64 = await apiGenerateShopPdfReportBase64(shopName, fromDate, toDate);
+        downloadBase64File(base64, `Income_${shopName}_Report_${fromDate}_to_${toDate}.pdf`);
+        showMessage('PDF downloaded successfully!', 'success');
+      } catch (error) {
+        showMessage(`Error: ${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

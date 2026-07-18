@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Report - CafeManager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .container-mobile { max-width: 100%; padding: 16px; }
+    @media (min-width: 768px) { .container-mobile { max-width: 100%; max-width: 1000px; margin: 0 auto; padding: 24px; } }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; padding: 20px; }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4); }
+    .btn-secondary { background: #f3f4f6; color: #667eea; padding: 12px 24px; border: 2px solid #667eea; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+    .btn-secondary:hover { background: #667eea; color: white; }
+    .form-input { padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; transition: all 0.3s; }
+    .form-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    .message { padding: 16px; border-radius: 8px; margin-bottom: 16px; font-weight: 600; display: none; animation: slideIn 0.3s ease-out; }
+    .message.show { display: block; }
+    .message.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .message.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .message.info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+    .summary-box { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+    .summary-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #93c5fd; }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-label { font-weight: 600; color: #1e40af; }
+    .summary-value { font-weight: 700; color: #1e3a8a; font-size: 18px; }
+    .table-responsive { overflow-x: auto; margin-top: 16px; }
+    .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    .table th { background: #f9fafb; font-weight: 700; color: #374151; }
+    .table tr:hover { background: #f9fafb; }
+    .table td { text-align: right; }
+    .table td:first-child { text-align: left; }
+    .tab-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .tab-btn { padding: 8px 16px; background: #f3f4f6; border: none; border-radius: 8px; font-weight: 600; color: #9ca3af; cursor: pointer; transition: all 0.3s; font-size: 14px; }
+    .tab-btn.active { background: #667eea; color: white; }
+    .row-flex { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .flex-1 { flex: 1; min-width: 150px; }
+    .w-full { width: 100%; }
+    @media (max-width: 767px) { .row-flex { flex-direction: column; } .flex-1 { min-width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="container-mobile">
+    <!-- Login Section -->
+    <div id="loginSection" class="card mb-4">
+      <h1 class="text-3xl font-bold mb-2 text-gray-800">CafeManager</h1>
+      <p class="text-gray-600 mb-6">Admin Report Portal</p>
+      <div id="message" class="message"></div>
+      <form id="loginForm">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #111827;">Username</label>
+          <input type="text" id="username" class="form-input" style="width: 100%;" required>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #111827;">Password</label>
+          <input type="password" id="password" class="form-input" style="width: 100%;" required>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">
+          <span id="loginBtnText">Admin Login</span>
+          <span id="loginSpinner" class="loading-spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Report Section -->
+    <div id="reportSection" class="hidden">
+      <div class="card mb-4">
+        <div class="flex justify-between items-center mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">Consolidated Report</h1>
+          <button id="logoutBtn" class="btn-secondary" style="padding: 8px 16px; font-size: 14px;">Logout</button>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <!-- Date Range Selection -->
+        <div class="row-flex mb-4">
+          <div class="flex-1">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #111827;">From Date</label>
+            <input type="date" id="fromDate" class="form-input" style="width: 100%;">
+          </div>
+          <div class="flex-1">
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #111827;">To Date</label>
+            <input type="date" id="toDate" class="form-input" style="width: 100%;">
+          </div>
+          <button type="button" id="generateBtn" class="btn-primary">
+            <span id="genBtnText">Generate Report</span>
+            <span id="genSpinner" class="loading-spinner hidden"></span>
+          </button>
+        </div>
+
+        <!-- Summary Box -->
+        <div id="summaryBox" class="hidden summary-box">
+          <h3 class="text-lg font-bold text-blue-900 mb-4">Overall Summary</h3>
+          <div class="summary-item">
+            <span class="summary-label">Total Collection</span>
+            <span class="summary-value" id="sumTotal">₹0.00</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Online Collection</span>
+            <span class="summary-value" id="sumOnline">₹0.00</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Cash Collection</span>
+            <span class="summary-value" id="sumCash">₹0.00</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Remittance to Bank</span>
+            <span class="summary-value" id="sumRemit">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="row-flex mb-6" id="exportButtonsContainer" style="display: none;">
+          <button id="downloadCsvBtn" class="btn-secondary flex-1">
+            <span id="csvBtnText">📥 Download CSV</span>
+            <span id="csvSpinner" class="loading-spinner hidden"></span>
+          </button>
+          <button id="downloadPdfBtn" class="btn-secondary flex-1">
+            <span id="pdfBtnText">📄 Download PDF</span>
+            <span id="pdfSpinner" class="loading-spinner hidden"></span>
+          </button>
+        </div>
+
+        <!-- Tabs -->
+        <div id="tabsContainer" class="hidden">
+          <div class="tab-group" id="locationTabs"></div>
+          <div class="table-responsive">
+            <table class="table" id="locationTable"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    const loginSection = document.getElementById('loginSection');
+    const reportSection = document.getElementById('reportSection');
+    const loginForm = document.getElementById('loginForm');
+    const message = document.getElementById('message');
+    let currentAdmin = null;
+
+    function init() {
+      const today = getTodayString();
+      document.getElementById('fromDate').value = getFirstDayOfMonthString();
+      document.getElementById('fromDate').max = today;
+      document.getElementById('toDate').value = today;
+      document.getElementById('toDate').max = today;
+      showLoginSection();
+    }
+
+    function showLoginSection() {
+      loginSection.classList.remove('hidden');
+      reportSection.classList.add('hidden');
+      currentAdmin = null;
+      hideMessage();
+      loginForm.reset();
+    }
+
+    function showReportSection() {
+      loginSection.classList.add('hidden');
+      reportSection.classList.remove('hidden');
+      hideMessage();
+    }
+
+    function showMessage(text, type = 'info') {
+      message.textContent = text;
+      message.className = `message show ${type}`;
+      setTimeout(hideMessage, 5000);
+    }
+
+    function hideMessage() {
+      message.classList.remove('show');
+    }
+
+    // Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      const btn = loginForm.querySelector('button');
+      const spinner = document.getElementById('loginSpinner');
+      const btnText = document.getElementById('loginBtnText');
+      
+      btn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const result = await apiAdminLogin(username, password);
+        if (result.success) {
+          currentAdmin = username;
+          showReportSection();
+          showMessage(result.message, 'success');
+        } else {
+          showMessage(result.message || 'Login failed', 'error');
+        }
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+
+    // Generate Report
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+
+      if (!fromDate || !toDate) {
+        showMessage('Please select both dates', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('generateBtn');
+      const spinner = document.getElementById('genSpinner');
+      const btnText = document.getElementById('genBtnText');
+      
+      btn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const data = await apiGetAggregatedReportData(fromDate, toDate);
+        if (!data || data.length === 0) {
+          showMessage('No data found for selected period', 'info');
+          document.getElementById('summaryBox').classList.add('hidden');
+          document.getElementById('exportButtonsContainer').style.display = 'none';
+          document.getElementById('tabsContainer').classList.add('hidden');
+          return;
+        }
+
+        // Calculate totals
+        let totTotal = 0, totOnline = 0, totCash = 0, totRemit = 0;
+        data.forEach(loc => {
+          totTotal += loc.totalCollection;
+          totOnline += loc.totalOnlineCollection;
+          totCash += loc.totalCashCollection;
+          totRemit += loc.totalRemittanceToBank;
+        });
+
+        // Show summary
+        document.getElementById('sumTotal').textContent = formatCurrency(totTotal);
+        document.getElementById('sumOnline').textContent = formatCurrency(totOnline);
+        document.getElementById('sumCash').textContent = formatCurrency(totCash);
+        document.getElementById('sumRemit').textContent = formatCurrency(totRemit);
+        document.getElementById('summaryBox').classList.remove('hidden');
+
+        // Show export buttons
+        document.getElementById('exportButtonsContainer').style.display = 'flex';
+
+        // Create tabs
+        const tabsContainer = document.getElementById('locationTabs');
+        tabsContainer.innerHTML = '';
+        data.forEach((loc, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'tab-btn ' + (idx === 0 ? 'active' : '');
+          btn.textContent = loc.locationName;
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderLocationTable(loc);
+          });
+          tabsContainer.appendChild(btn);
+        });
+
+        // Show first location
+        renderLocationTable(data[0]);
+        document.getElementById('tabsContainer').classList.remove('hidden');
+        showMessage('Report generated successfully', 'success');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+
+    function renderLocationTable(location) {
+      const table = document.getElementById('locationTable');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th style="text-align: left;">Metric</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align: left;">Total Collection</td>
+            <td>${formatCurrency(location.totalCollection)}</td>
+          </tr>
+          <tr>
+            <td style="text-align: left;">Online Collection</td>
+            <td>${formatCurrency(location.totalOnlineCollection)}</td>
+          </tr>
+          <tr>
+            <td style="text-align: left;">Cash Collection</td>
+            <td>${formatCurrency(location.totalCashCollection)}</td>
+          </tr>
+          <tr>
+            <td style="text-align: left;">Remittance to Bank</td>
+            <td>${formatCurrency(location.totalRemittanceToBank)}</td>
+          </tr>
+        </tbody>
+      `;
+    }
+
+    // CSV Download
+    document.getElementById('downloadCsvBtn').addEventListener('click', async () => {
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+      
+      const btn = document.getElementById('downloadCsvBtn');
+      const spinner = document.getElementById('csvSpinner');
+      const btnText = document.getElementById('csvBtnText');
+      
+      btn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const csv = await apiGetReportCsvData(fromDate, toDate);
+        downloadCsvFile(csv, `Income_Report_${fromDate}_to_${toDate}.csv`);
+        showMessage('CSV downloaded successfully', 'success');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+
+    // PDF Download
+    document.getElementById('downloadPdfBtn').addEventListener('click', async () => {
+      const fromDate = document.getElementById('fromDate').value;
+      const toDate = document.getElementById('toDate').value;
+      
+      const btn = document.getElementById('downloadPdfBtn');
+      const spinner = document.getElementById('pdfSpinner');
+      const btnText = document.getElementById('pdfBtnText');
+      
+      btn.disabled = true;
+      btnText.classList.add('hidden');
+      spinner.classList.remove('hidden');
+
+      try {
+        const base64 = await apiGenerateAdminPdfReportBase64(fromDate, toDate);
+        downloadBase64File(base64, `Income_Report_${fromDate}_to_${toDate}.pdf`);
+        showMessage('PDF downloaded successfully', 'success');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      showLoginSection();
+      showMessage('Logged out successfully', 'success');
+    });
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
