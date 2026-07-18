@@ -1,7 +1,7 @@
 /**
- * CAFEMANAGER - CONFIGURATION & API WRAPPER
+ * CAFEMANAGER - CONFIGURATION & API WRAPPER (HTTP Version)
  * Centralized configuration for frontend to connect with Apps Script backend
- * Update APPS_SCRIPT_URL with your deployment URL before deploying
+ * This version uses HTTP POST requests instead of google.script.run
  */
 
 // ============================================
@@ -11,7 +11,7 @@
 const CONFIG = {
   // Replace this with your Apps Script web app deployment URL
   // Get this from Apps Script > Deploy > Manage Deployments > Copy URL
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbz5g6HY7oFQFPXkKr7Mkc7xszGk8NGgpCB46lgnY1v_VZ3m-ZRVLBWGjeo6KDSob3i0SA/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/d/YOUR_DEPLOYMENT_ID_HERE/usercontent',
   
   // API timeout in milliseconds
   API_TIMEOUT: 30000,
@@ -26,44 +26,69 @@ const CONFIG = {
 };
 
 // ============================================
-// 2. API WRAPPER - Handles all communication with Apps Script
+// 2. HTTP-BASED API WRAPPER
 // ============================================
 
 /**
- * Base API caller with error handling and timeout
+ * Base API caller using HTTP POST
  * @param {string} functionName - Name of Apps Script function to call
  * @param {Array} args - Arguments to pass to the function
  * @returns {Promise} Resolves with function result or rejects with error
  */
-async function callAppsScript(functionName, args = []) {
+async function callAppsScriptViaHTTP(functionName, args = []) {
   if (!CONFIG.APPS_SCRIPT_URL.includes('script.google.com')) {
     throw new Error('❌ Configuration Error: APPS_SCRIPT_URL not set. Update js/config.js with your deployment URL.');
   }
 
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error(`Function '${functionName}' timed out after ${CONFIG.API_TIMEOUT}ms`));
-    }, CONFIG.API_TIMEOUT);
+  const payload = {
+    function: functionName,
+    args: args
+  };
 
-    try {
-      google.script.run
-        .withSuccessHandler((result) => {
-          clearTimeout(timeout);
-          if (CONFIG.FEATURES.DEBUG_MODE) {
-            console.log(`✓ ${functionName}:`, result);
-          }
-          resolve(result);
-        })
-        .withFailureHandler((error) => {
-          clearTimeout(timeout);
-          reject(new Error(`${functionName} failed: ${error.message || error}`));
-        })
-        [functionName](...args);
-    } catch (error) {
-      clearTimeout(timeout);
-      reject(error);
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
+
+    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-  });
+
+    let result;
+    try {
+      const text = await response.text();
+      // Try to parse as JSON, handling the case where result is wrapped in HTML tags
+      const jsonMatch = text.match(/\{.*\}/) || text.match(/\[.*\]/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      } else {
+        result = text;
+      }
+    } catch (parseError) {
+      result = await response.text();
+    }
+
+    if (CONFIG.FEATURES.DEBUG_MODE) {
+      console.log(`✓ ${functionName}:`, result);
+    }
+
+    return result;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`Function '${functionName}' timed out after ${CONFIG.API_TIMEOUT}ms`);
+    }
+    throw new Error(`${functionName} failed: ${error.message}`);
+  }
 }
 
 // ============================================
@@ -75,7 +100,7 @@ async function callAppsScript(functionName, args = []) {
  */
 async function apiUserLogin(username, password) {
   try {
-    return await callAppsScript('handleLogin', [username, password]);
+    return await callAppsScriptViaHTTP('handleLogin', [username, password]);
   } catch (error) {
     console.error('Login error:', error);
     throw error;
@@ -87,7 +112,7 @@ async function apiUserLogin(username, password) {
  */
 async function apiAdminLogin(username, password) {
   try {
-    return await callAppsScript('handleAdminLogin', [username, password]);
+    return await callAppsScriptViaHTTP('handleAdminLogin', [username, password]);
   } catch (error) {
     console.error('Admin login error:', error);
     throw error;
@@ -99,7 +124,7 @@ async function apiAdminLogin(username, password) {
  */
 async function apiSubmitFormData(formData) {
   try {
-    return await callAppsScript('processFormData', [formData]);
+    return await callAppsScriptViaHTTP('processFormData', [formData]);
   } catch (error) {
     console.error('Form submission error:', error);
     throw error;
@@ -111,7 +136,7 @@ async function apiSubmitFormData(formData) {
  */
 async function apiGetMyAggregatedData(locationName, fromDate, toDate) {
   try {
-    return await callAppsScript('getMyAggregatedData', [locationName, fromDate, toDate]);
+    return await callAppsScriptViaHTTP('getMyAggregatedData', [locationName, fromDate, toDate]);
   } catch (error) {
     console.error('Data fetch error:', error);
     throw error;
@@ -123,7 +148,7 @@ async function apiGetMyAggregatedData(locationName, fromDate, toDate) {
  */
 async function apiGetMyDayByDayData(locationName, fromDate, toDate) {
   try {
-    return await callAppsScript('getMyDayByDayData', [locationName, fromDate, toDate]);
+    return await callAppsScriptViaHTTP('getMyDayByDayData', [locationName, fromDate, toDate]);
   } catch (error) {
     console.error('Day-by-day data fetch error:', error);
     throw error;
@@ -135,7 +160,7 @@ async function apiGetMyDayByDayData(locationName, fromDate, toDate) {
  */
 async function apiGetAggregatedReportData(fromDate, toDate) {
   try {
-    return await callAppsScript('getAggregatedReportData', [fromDate, toDate]);
+    return await callAppsScriptViaHTTP('getAggregatedReportData', [fromDate, toDate]);
   } catch (error) {
     console.error('Aggregated report fetch error:', error);
     throw error;
@@ -147,7 +172,7 @@ async function apiGetAggregatedReportData(fromDate, toDate) {
  */
 async function apiGetReportCsvData(fromDate, toDate) {
   try {
-    return await callAppsScript('getReportCsvData', [fromDate, toDate]);
+    return await callAppsScriptViaHTTP('getReportCsvData', [fromDate, toDate]);
   } catch (error) {
     console.error('CSV data fetch error:', error);
     throw error;
@@ -159,7 +184,7 @@ async function apiGetReportCsvData(fromDate, toDate) {
  */
 async function apiGenerateAdminPdfReportBase64(fromDate, toDate) {
   try {
-    return await callAppsScript('generateAdminPdfReportBase64', [fromDate, toDate]);
+    return await callAppsScriptViaHTTP('generateAdminPdfReportBase64', [fromDate, toDate]);
   } catch (error) {
     console.error('PDF generation error:', error);
     throw error;
@@ -171,7 +196,7 @@ async function apiGenerateAdminPdfReportBase64(fromDate, toDate) {
  */
 async function apiGenerateShopPdfReportBase64(shopName, fromDate, toDate) {
   try {
-    return await callAppsScript('generateShopPdfReportBase64', [shopName, fromDate, toDate]);
+    return await callAppsScriptViaHTTP('generateShopPdfReportBase64', [shopName, fromDate, toDate]);
   } catch (error) {
     console.error('Shop PDF generation error:', error);
     throw error;
@@ -385,8 +410,47 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.includes('YOUR_DEPLOYMENT_ID')) {
     console.warn('⚠️ WARNING: APPS_SCRIPT_URL not configured in config.js');
     console.warn('Please update the APPS_SCRIPT_URL with your Apps Script deployment URL');
+    showNotification('❌ Backend not configured! Update config.js with your deployment URL.', 'error', 10000);
   }
   if (CONFIG.FEATURES.DEBUG_MODE) {
     console.log('📋 Debug mode enabled. Configuration:', CONFIG);
   }
 });
+
+/**
+ * Show temporary notification
+ */
+function showNotification(message, type = 'info', duration = 4000) {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    z-index: 9999;
+    animation: slideIn 0.3s ease-out;
+    font-weight: 600;
+    max-width: 90vw;
+  `;
+
+  const colors = {
+    success: { bg: '#dcfce7', text: '#166534', border: '1px solid #86efac' },
+    error: { bg: '#fee2e2', text: '#991b1b', border: '1px solid #fca5a5' },
+    info: { bg: '#dbeafe', text: '#1e40af', border: '1px solid #93c5fd' }
+  };
+
+  const color = colors[type] || colors.info;
+  notification.style.backgroundColor = color.bg;
+  notification.style.color = color.text;
+  notification.style.border = color.border;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => notification.remove(), 300);
+  }, duration);
+}
