@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Income Data Entry - Cafe Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem 1.5rem;
+      color: white;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      font-size: 0.875rem;
+      opacity: 0.9;
+    }
+    .content {
+      padding: 2rem 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .form-group input[type="date"] {
+      cursor: pointer;
+    }
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .btn {
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #667eea;
+      border: 2px solid #e0e0e0;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+    .btn.loading .spinner {
+      display: block;
+    }
+    .btn.loading span {
+      opacity: 0;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .message {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-weight: 600;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+    .message.show {
+      display: block;
+    }
+    .message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+    .message.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .login-form {
+      display: block;
+    }
+    .report-section {
+      display: none;
+    }
+    .report-section.show {
+      display: block;
+    }
+    .summary-card {
+      background: #f0f9ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .summary-card h3 {
+      font-size: 1.1rem;
+      color: #1e40af;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px dashed #dbeafe;
+      font-size: 0.95rem;
+    }
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+    .summary-label {
+      color: #333;
+      font-weight: 600;
+    }
+    .summary-value {
+      color: #1c4a78;
+      font-weight: 700;
+    }
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 2rem;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .data-table th {
+      background: #f2f2f2;
+      padding: 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #ddd;
+    }
+    .data-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+    .data-table tr:hover {
+      background: #f9f9f9;
+    }
+    .hidden {
+      display: none !important;
+    }
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.25rem;
+      }
+      .content {
+        padding: 1.5rem 1rem;
+      }
+      .button-group {
+        grid-template-columns: 1fr;
+      }
+      .form-group input,
+      .form-group select {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login Form Section -->
+    <div id="loginSection" class="login-form">
+      <div class="header">
+        <h1>📊 Cafe Manager</h1>
+        <p>Income Data Entry Portal</p>
+      </div>
+      <div class="content">
+        <form id="loginForm">
+          <div id="loginMessage" class="message"></div>
+          
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <span>Login</span>
+            <div class="spinner"></div>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Data Entry Section -->
+    <div id="dataEntrySection" class="report-section">
+      <div class="header">
+        <h1>📝 Income Entry</h1>
+        <p id="locationDisplay"></p>
+      </div>
+      <div class="content">
+        <div id="entryMessage" class="message"></div>
+
+        <form id="dataEntryForm">
+          <div class="form-group">
+            <label for="entryDate">Date</label>
+            <input type="date" id="entryDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="totalCollection">Total Collection</label>
+            <input type="number" id="totalCollection" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+
+          <div class="form-group">
+            <label for="onlineCollection">Online Collection</label>
+            <input type="number" id="onlineCollection" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+
+          <div class="form-group">
+            <label for="remittanceToBank">Remittance to Bank</label>
+            <input type="number" id="remittanceToBank" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">
+              <span>Submit</span>
+              <div class="spinner"></div>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="clearForm()">
+              <span>Clear</span>
+            </button>
+          </div>
+        </form>
+
+        <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;" onclick="showReportSection()">
+          View My Report
+        </button>
+
+        <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="logout()">
+          Logout
+        </button>
+      </div>
+    </div>
+
+    <!-- Report Section -->
+    <div id="reportViewSection" class="report-section">
+      <div class="header">
+        <h1>📈 My Report</h1>
+        <p id="reportLocation"></p>
+      </div>
+      <div class="content">
+        <div id="reportMessage" class="message"></div>
+
+        <div class="form-group">
+          <label for="reportFromDate">From Date</label>
+          <input type="date" id="reportFromDate" required>
+        </div>
+
+        <div class="form-group">
+          <label for="reportToDate">To Date</label>
+          <input type="date" id="reportToDate" required>
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width: 100%;" onclick="generateMyReport()">
+          <span>Generate Report</span>
+          <div class="spinner"></div>
+        </button>
+
+        <div id="myReportSummary" class="summary-card hidden">
+          <h3>Summary</h3>
+          <div class="summary-row">
+            <span class="summary-label">Total Collection:</span>
+            <span class="summary-value" id="myTotalCollection">₹0.00</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Online Collection:</span>
+            <span class="summary-value" id="myOnlineCollection">₹0.00</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Cash Collection:</span>
+            <span class="summary-value" id="myCashCollection">₹0.00</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Remittance to Bank:</span>
+            <span class="summary-value" id="myRemittanceToBank">₹0.00</span>
+          </div>
+        </div>
+
+        <div id="myReportTableContainer" class="table-container hidden">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Online</th>
+                <th>Cash</th>
+                <th>Remittance</th>
+              </tr>
+            </thead>
+            <tbody id="myReportTableBody">
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="hideReportSection()">
+          Back to Entry
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration - Update this with your deployed Apps Script URL
+    const APPS_SCRIPT_URL = 'YOUR_DEPLOYED_APPS_SCRIPT_URL';
+
+    let currentUser = null;
+
+    // Set default dates
+    function setDefaultDates() {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      document.getElementById('entryDate').valueAsDate = today;
+      document.getElementById('reportFromDate').valueAsDate = firstDay;
+      document.getElementById('reportToDate').valueAsDate = today;
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      setDefaultDates();
+      document.getElementById('loginForm').addEventListener('submit', handleLogin);
+      document.getElementById('dataEntryForm').addEventListener('submit', handleDataSubmit);
+    });
+
+    // Login Handler
+    async function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      
+      showLoading(btn);
+      showMessage('loginMessage', 'Authenticating...', 'info');
+
+      try {
+        const response = await google.script.run
+          .withSuccessHandler((result) => {
+            hideLoading(btn);
+            if (result.success) {
+              currentUser = result.locationName;
+              document.getElementById('locationDisplay').textContent = result.locationName;
+              document.getElementById('reportLocation').textContent = result.locationName;
+              showSection('dataEntrySection');
+              showMessage('entryMessage', 'Login successful!', 'success');
+            } else {
+              showMessage('loginMessage', result.message, 'error');
+            }
+          })
+          .withFailureHandler((error) => {
+            hideLoading(btn);
+            showMessage('loginMessage', 'Error: ' + (error.message || 'Login failed'), 'error');
+          })
+          .handleLogin(username, password);
+      } catch (error) {
+        hideLoading(btn);
+        showMessage('loginMessage', 'Error: ' + error.message, 'error');
+      }
+    }
+
+    // Data Entry Handler
+    async function handleDataSubmit(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      showLoading(btn);
+
+      const formData = {
+        date: document.getElementById('entryDate').value,
+        totalCollection: parseFloat(document.getElementById('totalCollection').value),
+        onlineCollection: parseFloat(document.getElementById('onlineCollection').value),
+        remittanceToBank: parseFloat(document.getElementById('remittanceToBank').value),
+        location: currentUser
+      };
+
+      try {
+        const response = await google.script.run
+          .withSuccessHandler((result) => {
+            hideLoading(btn);
+            if (result.success) {
+              showMessage('entryMessage', result.message, 'success');
+              document.getElementById('dataEntryForm').reset();
+              setDefaultDates();
+            } else {
+              showMessage('entryMessage', result.message, 'error');
+            }
+          })
+          .withFailureHandler((error) => {
+            hideLoading(btn);
+            showMessage('entryMessage', 'Error: ' + (error.message || 'Submission failed'), 'error');
+          })
+          .processFormData(formData);
+      } catch (error) {
+        hideLoading(btn);
+        showMessage('entryMessage', 'Error: ' + error.message, 'error');
+      }
+    }
+
+    // Report Generation
+    async function generateMyReport() {
+      const fromDate = document.getElementById('reportFromDate').value;
+      const toDate = document.getElementById('reportToDate').value;
+      const btn = event.target.closest('.btn');
+
+      if (!fromDate || !toDate) {
+        showMessage('reportMessage', 'Please select both dates', 'error');
+        return;
+      }
+
+      showLoading(btn);
+      showMessage('reportMessage', 'Generating report...', 'info');
+
+      try {
+        const reportData = await google.script.run
+          .withSuccessHandler((result) => {
+            hideLoading(btn);
+            if (result) {
+              displayMyReport(result);
+              showMessage('reportMessage', 'Report generated successfully!', 'success');
+            } else {
+              showMessage('reportMessage', 'No data found', 'error');
+            }
+          })
+          .withFailureHandler((error) => {
+            hideLoading(btn);
+            showMessage('reportMessage', 'Error: ' + (error.message || 'Report generation failed'), 'error');
+          })
+          .getMyAggregatedData(currentUser, fromDate, toDate);
+      } catch (error) {
+        hideLoading(btn);
+        showMessage('reportMessage', 'Error: ' + error.message, 'error');
+      }
+    }
+
+    // Display My Report
+    function displayMyReport(data) {
+      document.getElementById('myTotalCollection').textContent = formatCurrency(data.totalCollection);
+      document.getElementById('myOnlineCollection').textContent = formatCurrency(data.totalOnlineCollection);
+      document.getElementById('myCashCollection').textContent = formatCurrency(data.totalCashCollection);
+      document.getElementById('myRemittanceToBank').textContent = formatCurrency(data.totalRemittanceToBank);
+      
+      document.getElementById('myReportSummary').classList.remove('hidden');
+
+      // Fetch day-by-day data
+      const fromDate = document.getElementById('reportFromDate').value;
+      const toDate = document.getElementById('reportToDate').value;
+      
+      google.script.run
+        .withSuccessHandler((dailyData) => {
+          if (dailyData && dailyData.length > 0) {
+            populateDailyTable(dailyData);
+            document.getElementById('myReportTableContainer').classList.remove('hidden');
+          }
+        })
+        .getMyDayByDayData(currentUser, fromDate, toDate);
+    }
+
+    // Populate Daily Table
+    function populateDailyTable(data) {
+      const tbody = document.getElementById('myReportTableBody');
+      tbody.innerHTML = '';
+      
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.date}</td>
+          <td>${formatCurrency(row.totalCollection)}</td>
+          <td>${formatCurrency(row.onlineCollection)}</td>
+          <td>${formatCurrency(row.cashCollection)}</td>
+          <td>${formatCurrency(row.remittanceToBank)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // UI Helpers
+    function showSection(sectionId) {
+      document.querySelectorAll('[id$="Section"]').forEach(el => {
+        el.classList.remove('show');
+      });
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.classList.add('show');
+      }
+    }
+
+    function showMessage(elementId, message, type) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.className = 'message show ' + type;
+    }
+
+    function showLoading(btn) {
+      btn.classList.add('loading');
+      btn.disabled = true;
+    }
+
+    function hideLoading(btn) {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
+    function clearForm() {
+      document.getElementById('dataEntryForm').reset();
+      setDefaultDates();
+    }
+
+    function showReportSection() {
+      setDefaultDates();
+      showSection('reportViewSection');
+    }
+
+    function hideReportSection() {
+      document.getElementById('myReportSummary').classList.add('hidden');
+      document.getElementById('myReportTableContainer').classList.add('hidden');
+      showSection('dataEntrySection');
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById('loginForm').reset();
+      document.getElementById('dataEntryForm').reset();
+      document.getElementById('myReportSummary').classList.add('hidden');
+      document.getElementById('myReportTableContainer').classList.add('hidden');
+      showSection('loginSection');
+      showMessage('loginMessage', 'Logged out successfully!', 'success');
+    }
+
+    function formatCurrency(value) {
+      if (typeof value !== 'number' || isNaN(value)) return '₹0.00';
+      return '₹' + value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  </script>
+</body>
+</html>
